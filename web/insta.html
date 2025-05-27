@@ -1,8 +1,9 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reel Downloader</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Instagram Reel Downloader</title>
   <style>
     body {
       margin: 0;
@@ -59,32 +60,44 @@
       border-radius: 8px;
       font-size: 14px;
       min-height: 50px;
+      white-space: pre-wrap;
       word-break: break-word;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Instagram Reel Downloader.</h1>
-    <input type="text" id="reelUrl" placeholder="Enter Instagram Reel URL">
+    <h1>Instagram Reel Downloader</h1>
+    <input type="text" id="reelUrl" placeholder="Enter Instagram Reel URL" />
     <button onclick="startDownload()">Download</button>
     <div id="output">Waiting for input...</div>
-  </div>  <script>
+  </div>
+
+  <script>
     function startDownload() {
-      const url = document.getElementById("reelUrl").value;
+      const url = document.getElementById("reelUrl").value.trim();
       const output = document.getElementById("output");
-      if (!url || !url.includes("instagram.com/reel/")) {
+      
+      if (
+        !url || 
+        !(
+          url.includes("instagram.com/reel/") || 
+          url.includes("instagram.com/share/reel/")
+        )
+      ) {
         output.textContent = "Please enter a valid Instagram Reel URL.";
         return;
       }
+      
       output.textContent = "Parsing video URL...";
+      
       fetch(`https://www.save-insta.com/api?url=${encodeURIComponent(url)}`)
         .then(res => res.text())
         .then(text => {
           try {
             const data = JSON.parse(text);
             if (data.success && data.video_url) {
-              output.innerHTML = `Video ready: <a href="${data.video_url}" target="_blank">Download Now</a>`;
+              output.innerHTML = `Video ready: <a href="${data.video_url}" target="_blank" rel="noopener noreferrer">Download Now</a>`;
             } else {
               output.textContent = "API responded but no video URL found:\n" + text;
             }
@@ -96,5 +109,6 @@
           output.textContent = "Network or fetch error:\n" + err;
         });
     }
-  </script></body>
+  </script>
+</body>
 </html>
