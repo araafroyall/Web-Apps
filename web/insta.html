@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reel Downloader</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #e0f7fa;
+      color: #004d40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h1 {
+      color: #00796b;
+      text-align: center;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #009688;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #009688;
+      color: white;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #00796b;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #e0f2f1;
+      border-left: 4px solid #00796b;
+      border-radius: 8px;
+      font-size: 14px;
+      min-height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Instagram Reel Downloader</h1>
+    <input type="text" id="reelUrl" placeholder="Enter Instagram Reel URL">
+    <button onclick="startDownload()">Download</button>
+    <div id="output">Waiting for input...</div>
+  </div>  <script>
+    function startDownload() {
+      const url = document.getElementById("reelUrl").value;
+      const output = document.getElementById("output");
+      if (!url || !url.includes("instagram.com/reel/")) {
+        output.textContent = "Please enter a valid Instagram Reel URL.";
+        return;
+      }
+      output.textContent = "Parsing video URL...";
+      fetch(`https://www.save-insta.com/api?url=${encodeURIComponent(url)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.video_url) {
+            output.innerHTML = `Video ready: <a href="${data.video_url}" target="_blank">Download Now</a>`;
+          } else {
+            output.textContent = "Failed to retrieve video URL.";
+          }
+        })
+        .catch(err => {
+          output.textContent = "Error fetching video. Check the URL or try again later.";
+        });
+    }
+  </script></body>
+</html>
