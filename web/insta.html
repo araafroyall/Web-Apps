@@ -2,112 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Instagram Reel Downloader</title>
+  <title>Instagram Reel Player</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #e0f7fa;
-      color: #004d40;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    h1 {
-      color: #00796b;
-      text-align: center;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      margin-bottom: 20px;
-      border: 2px solid #009688;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    button {
-      background-color: #009688;
-      color: white;
-      padding: 12px;
-      width: 100%;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #00796b;
-    }
-    #output {
-      margin-top: 20px;
-      padding: 12px;
-      background-color: #e0f2f1;
-      border-left: 4px solid #00796b;
-      border-radius: 8px;
-      font-size: 14px;
-      min-height: 50px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
+    body { font-family: Arial; padding: 20px; }
+    input, button { padding: 8px; font-size: 1rem; }
+    video { max-width: 100%; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Instagram Reel Downloader</h1>
-    <input type="text" id="reelUrl" placeholder="Enter Instagram Reel URL" />
-    <button onclick="startDownload()">Download</button>
-    <div id="output">Waiting for input...</div>
-  </div>
+  <h2>Instagram Reel Player</h2>
+  <input id="urlInput" type="text" placeholder="Enter Instagram Reel URL" style="width: 300px;" />
+  <button onclick="loadReel()">Play Reel</button>
+  <video id="videoPlayer" controls></video>
 
   <script>
-    function startDownload() {
-      const url = document.getElementById("reelUrl").value.trim();
-      const output = document.getElementById("output");
-      
-      if (
-        !url || 
-        !(
-          url.includes("instagram.com/reel/") || 
-          url.includes("instagram.com/share/reel/")
-        )
-      ) {
-        output.textContent = "Please enter a valid Instagram Reel URL.";
+    async function loadReel() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) {
+        alert('Enter a valid Instagram reel URL.');
         return;
       }
-      
-      output.textContent = "Parsing video URL...";
-      
-      fetch(`https://www.save-insta.com/api?url=${encodeURIComponent(url)}`)
-        .then(res => res.text())
-        .then(text => {
-          try {
-            const data = JSON.parse(text);
-            if (data.success && data.video_url) {
-              output.innerHTML = `Video ready: <a href="${data.video_url}" target="_blank" rel="noopener noreferrer">Download Now</a>`;
-            } else {
-              output.textContent = "API responded but no video URL found:\n" + text;
-            }
-          } catch (e) {
-            output.textContent = "Failed to parse response:\n" + e + "\nRaw response:\n" + text;
-          }
-        })
-        .catch(err => {
-          output.textContent = "Network or fetch error:\n" + err;
-        });
+
+      const proxy = 'https://api.allorigins.win/get?url='; // free public CORS proxy
+      const targetUrl = encodeURIComponent(url);
+
+      try {
+        const response = await fetch(proxy + targetUrl);
+        const data = await response.json();
+        const html = data.contents;
+
+        // Extract JSON data with video info
+        const jsonString = html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/);
+        if (!jsonString) {
+          alert('Could not extract video URL.');
+          return;
+        }
+        const jsonData = JSON.parse(jsonString[1]);
+        const videoUrl = jsonData.contentUrl;
+
+        if (!videoUrl) {
+          alert('Video URL not found.');
+          return;
+        }
+
+        const videoPlayer = document.getElementById('videoPlayer');
+        videoPlayer.src = videoUrl;
+        videoPlayer.play();
+      } catch (e) {
+        alert('Failed to load reel video. ' + e.message);
+      }
     }
   </script>
 </body>
