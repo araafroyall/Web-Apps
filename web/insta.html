@@ -59,12 +59,13 @@
       border-radius: 8px;
       font-size: 14px;
       min-height: 50px;
+      word-break: break-word;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Instagram Reel Downloader</h1>
+    <h1>Instagram Reel Downloader.</h1>
     <input type="text" id="reelUrl" placeholder="Enter Instagram Reel URL">
     <button onclick="startDownload()">Download</button>
     <div id="output">Waiting for input...</div>
@@ -78,16 +79,21 @@
       }
       output.textContent = "Parsing video URL...";
       fetch(`https://www.save-insta.com/api?url=${encodeURIComponent(url)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.video_url) {
-            output.innerHTML = `Video ready: <a href="${data.video_url}" target="_blank">Download Now</a>`;
-          } else {
-            output.textContent = "Failed to retrieve video URL.";
+        .then(res => res.text())
+        .then(text => {
+          try {
+            const data = JSON.parse(text);
+            if (data.success && data.video_url) {
+              output.innerHTML = `Video ready: <a href="${data.video_url}" target="_blank">Download Now</a>`;
+            } else {
+              output.textContent = "API responded but no video URL found:\n" + text;
+            }
+          } catch (e) {
+            output.textContent = "Failed to parse response:\n" + e + "\nRaw response:\n" + text;
           }
         })
         .catch(err => {
-          output.textContent = "Error fetching video. Check the URL or try again later.";
+          output.textContent = "Network or fetch error:\n" + err;
         });
     }
   </script></body>
