@@ -1,7 +1,7 @@
 const CACHE_NAME = "text-styler-cache-v1";
 const urlsToCache = [
   "/",
-  "/index.html",
+  "/bold.html",
   "/manifest.json",
   "/service-worker.js"
   // Add any other assets like icons or fonts if needed
