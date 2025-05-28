@@ -1,4 +1,4 @@
-const CACHE_NAME = "bold-text-maker-cache-v1";
+const CACHE_NAME = "flat-icon-cache-v1";
 const urlsToCache = [
   "/",
   "/manifest.json",
