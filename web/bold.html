@@ -3,75 +3,97 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Text Styler</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Roboto', sans-serif;
-      background-color: #dff9fb;
+      background-color: #dffbff;
+      font-family: sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 0;
     }
     .container {
       max-width: 500px;
-      margin: 0 auto;
+      margin: 40px auto;
       background: white;
-      padding: 20px;
       border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      padding: 30px;
     }
     h2 {
       text-align: center;
-      color: #0984e3;
+      color: teal;
+      font-size: 26px;
       margin-bottom: 20px;
     }
-    textarea {
+    input[type="text"] {
       width: 100%;
-      padding: 10px;
-      font-size: 18px;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 10px;
       border: 1px solid #ccc;
-      border-radius: 10px;
-      resize: vertical;
+      box-sizing: border-box;
+      margin-bottom: 20px;
     }
-    .output {
-      background: #ecf0f1;
-      margin-top: 15px;
-      padding: 10px;
+    .styled-text {
+      background-color: #e3fcfc;
+      color: teal;
+      font-size: 18px;
+      margin: 10px 0;
+      padding: 10px 15px;
       border-radius: 10px;
-      font-weight: bold;
-      word-wrap: break-word;
-      font-family: 'Roboto', sans-serif;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .bold {
-      font-weight: bold;
+    button {
+      background-color: teal;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Text Styler</h2>
-    <textarea id="textInput" rows="4" placeholder="Type something..."></textarea>
-    <div id="styledOutput" class="output"></div>
+    <input type="text" id="inputText" placeholder="Type here...">
+    <div class="styled-text" id="boldSerif"></div>
+    <div class="styled-text" id="boldSans"></div>
+    <div class="styled-text" id="italicBoldSerif"></div>
+    <div class="styled-text" id="italicBoldSans"></div>
   </div>  <script>
-    const textInput = document.getElementById('textInput');
-    const styledOutput = document.getElementById('styledOutput');
+    const input = document.getElementById('inputText');
 
-    textInput.addEventListener('input', () => {
-      const text = textInput.value;
-      styledOutput.textContent = convertToBold(text);
-    });
+    const maps = {
+      boldSerif: {
+        A: '𝐀', B: '𝐁', C: '𝐂', D: '𝐃', E: '𝐄', F: '𝐅', G: '𝐆', H: '𝐇', I: '𝐈', J: '𝐉', K: '𝐊', L: '𝐋', M: '𝐌', N: '𝐍', O: '𝐎', P: '𝐏', Q: '𝐐', R: '𝐑', S: '𝐒', T: '𝐓', U: '𝐔', V: '𝐕', W: '𝐖', X: '𝐗', Y: '𝐘', Z: '𝐙',
+        a: '𝐚', b: '𝐛', c: '𝐜', d: '𝐝', e: '𝐞', f: '𝐟', g: '𝐠', h: '𝐡', i: '𝐢', j: '𝐣', k: '𝐤', l: '𝐥', m: '𝐦', n: '𝐧', o: '𝐨', p: '𝐩', q: '𝐪', r: '𝐫', s: '𝐬', t: '𝐭', u: '𝐮', v: '𝐯', w: '𝐰', x: '𝐱', y: '𝐲', z: '𝐳'
+      },
+      boldSans: {
+        A: '𝗔', B: '𝗕', C: '𝗖', D: '𝗗', E: '𝗘', F: '𝗙', G: '𝗚', H: '𝗛', I: '𝗜', J: '𝗝', K: '𝗞', L: '𝗟', M: '𝗠', N: '𝗡', O: '𝗢', P: '𝗣', Q: '𝗤', R: '𝗥', S: '𝗦', T: '𝗧', U: '𝗨', V: '𝗩', W: '𝗪', X: '𝗫', Y: '𝗬', Z: '𝗭',
+        a: '𝗮', b: '𝗯', c: '𝗰', d: '𝗱', e: '𝗲', f: '𝗳', g: '𝗴', h: '𝗵', i: '𝗶', j: '𝗷', k: '𝗸', l: '𝗹', m: '𝗺', n: '𝗻', o: '𝗼', p: '𝗽', q: '𝗾', r: '𝗿', s: '𝘀', t: '𝘁', u: '𝘂', v: '𝘃', w: '𝘄', x: '𝘅', y: '𝘆', z: '𝘇'
+      },
+      italicBoldSerif: {
+        A: '𝑨', B: '𝑩', C: '𝑪', D: '𝑫', E: '𝑬', F: '𝑭', G: '𝑮', H: '𝑯', I: '𝑰', J: '𝑱', K: '𝑲', L: '𝑳', M: '𝑴', N: '𝑵', O: '𝑶', P: '𝑷', Q: '𝑸', R: '𝑹', S: '𝑺', T: '𝑻', U: '𝑼', V: '𝑽', W: '𝑾', X: '𝑿', Y: '𝒀', Z: '𝒁',
+        a: '𝒂', b: '𝒃', c: '𝒄', d: '𝒅', e: '𝒆', f: '𝒇', g: '𝒈', h: '𝒉', i: '𝒊', j: '𝒋', k: '𝒌', l: '𝒍', m: '𝒎', n: '𝒏', o: '𝒐', p: '𝒑', q: '𝒒', r: '𝒓', s: '𝒔', t: '𝒕', u: '𝒖', v: '𝒗', w: '𝒘', x: '𝒙', y: '𝒚', z: '𝒛'
+      },
+      italicBoldSans: {
+        A: '𝘼', B: '𝘽', C: '𝘾', D: '𝘿', E: '𝙀', F: '𝙁', G: '𝙂', H: '𝙃', I: '𝙄', J: '𝙅', K: '𝙆', L: '𝙇', M: '𝙈', N: '𝙉', O: '𝙊', P: '𝙋', Q: '𝙌', R: '𝙍', S: '𝙎', T: '𝙏', U: '𝙐', V: '𝙑', W: '𝙒', X: '𝙓', Y: '𝙔', Z: '𝙕',
+        a: '𝙖', b: '𝙗', c: '𝙘', d: '𝙙', e: '𝙚', f: '𝙛', g: '𝙜', h: '𝙝', i: '𝙞', j: '𝙟', k: '𝙠', l: '𝙡', m: '𝙢', n: '𝙣', o: '𝙤', p: '𝙥', q: '𝙦', r: '𝙧', s: '𝙨', t: '𝙩', u: '𝙪', v: '𝙫', w: '𝙬', x: '𝙭', y: '𝙮', z: '𝙯'
+      }
+    };
 
-    function convertToBold(text) {
-      const boldOffset = 0x1D400 - 0x41; // Unicode math bold A offset
-      return text.split('').map(char => {
-        const code = char.charCodeAt(0);
-        if (code >= 0x41 && code <= 0x5A) {
-          return String.fromCodePoint(boldOffset + code);
-        } else if (code >= 0x61 && code <= 0x7A) {
-          return String.fromCodePoint(boldOffset + code + 26);
-        } else {
-          return char;
-        }
-      }).join('');
+    function transform(text, map) {
+      return [...text].map(ch => map[ch] || ch).join('');
     }
+
+    input.addEventListener('input', () => {
+      document.getElementById('boldSerif').textContent = transform(input.value, maps.boldSerif);
+      document.getElementById('boldSans').textContent = transform(input.value, maps.boldSans);
+      document.getElementById('italicBoldSerif').textContent = transform(input.value, maps.italicBoldSerif);
+      document.getElementById('italicBoldSans').textContent = transform(input.value, maps.italicBoldSans);
+    });
   </script></body>
 </html>
