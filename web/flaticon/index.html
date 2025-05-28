@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#008080">
   <meta http-equiv="refresh" content="0; url=https://helpingmuslim.blogspot.com/2023/12/blog-post.html?m=1">
 </head>
 <body>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log("Service Worker registered!"))
+        .catch(err => console.error("SW registration failed:", err));
+    });
+  }
+</script>
 </body>
 </html>
