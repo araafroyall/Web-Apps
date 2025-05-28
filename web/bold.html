@@ -1,152 +1,168 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Text Styler</title>
   <style>
     body {
       margin: 0;
-      padding: 20px;
-      background: #e0f7f7;
-      font-family: sans-serif;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #e0f7f9;
       color: #004d4d;
-    }
-    .container {
-      max-width: 480px;
-      margin: auto;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: teal;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: 2px solid teal;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .result-block {
-      margin-bottom: 16px;
-      padding: 12px;
-      border-left: 4px solid teal;
-      background: #f0fbfa;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .styled-text {
-      flex: 1;
-      margin-right: 8px;
-      overflow-x: auto;
-    }
-    .copy-btn {
-      padding: 8px 12px;
-      background: teal;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .copy-btn:active {
-      background: #007777;
-    }
-    @media(max-width: 480px) {
-      .styled-text {
-        font-size: 15px;
-      }
-    }
+    }.container {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.2);
+}
+
+h1 {
+  text-align: center;
+  color: teal;
+  font-size: 28px;
+}
+
+.input-container {
+  display: flex;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.input-container textarea {
+  flex: 1;
+  resize: none;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  height: 45px;
+}
+
+.input-container button {
+  margin-left: 10px;
+  padding: 0 16px;
+  font-size: 20px;
+  background: teal;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.output {
+  background-color: #e6fafa;
+  margin-bottom: 15px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.styled-text {
+  overflow-wrap: anywhere;
+}
+
+.copy-btn {
+  background: teal;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Text Styler</h1>
-    <input type="text" id="inputText" placeholder="Enter your text..." oninput="updateText()" />
-
-    <div class="result-block">
-      <div class="styled-text" id="boldSerif">Bold Serif</div>
-      <button class="copy-btn" onclick="copyText('boldSerif')">Copy</button>
+    <div class="input-container">
+      <textarea id="userInput" placeholder="Type something..."></textarea>
+      <button onclick="applyStyles()">+</button>
     </div>
+    <div id="outputArea"></div>
+  </div>  <script>
+    function applyStyles() {
+      const input = document.getElementById('userInput').value;
+      const outputArea = document.getElementById('outputArea');
+      outputArea.innerHTML = '';
 
-    <div class="result-block">
-      <div class="styled-text" id="boldSans">Bold Sans</div>
-      <button class="copy-btn" onclick="copyText('boldSans')">Copy</button>
-    </div>
+      const styles = [
+        toBoldSerif(input),
+        toBoldSans(input),
+        toItalicBoldSans(input),
+        toItalicBoldSerif(input)
+      ];
 
-    <div class="result-block">
-      <div class="styled-text" id="italicBoldSans">Italic Bold Sans</div>
-      <button class="copy-btn" onclick="copyText('italicBoldSans')">Copy</button>
-    </div>
+      styles.forEach(text => {
+        const div = document.createElement('div');
+        div.className = 'output';
 
-    <div class="result-block">
-      <div class="styled-text" id="italicBoldSerif">Italic Bold Serif</div>
-      <button class="copy-btn" onclick="copyText('italicBoldSerif')">Copy</button>
-    </div>
-  </div>
+        const span = document.createElement('span');
+        span.className = 'styled-text';
+        span.textContent = text;
 
-  <script>
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.textContent = 'Copy';
+        btn.onclick = () => navigator.clipboard.writeText(text);
+
+        div.appendChild(span);
+        div.appendChild(btn);
+        outputArea.appendChild(div);
+      });
+    }
+
     function toBoldSerif(text) {
-      const map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-      const bold = "𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙" +
-                   "𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳";
-      return text.split("").map(c => {
-        let i = map.indexOf(c);
-        return i >= 0 ? bold[i] : c;
-      }).join("");
+      const map = '𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙'.split('');
+      const small = '𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳'.split('');
+      return [...text].map(c => {
+        const code = c.charCodeAt(0);
+        if (code >= 65 && code <= 90) return map[code - 65];
+        if (code >= 97 && code <= 122) return small[code - 97];
+        return c;
+      }).join('');
     }
 
     function toBoldSans(text) {
-      const map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-      const bold = "𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭" +
-                   "𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝗿𝗿𝗿𝗿𝘁𝘂𝘃𝘄𝘅𝘆𝘇";
-      return text.split("").map(c => {
-        let i = map.indexOf(c);
-        return i >= 0 ? bold[i] : c;
-      }).join("");
+      const map = '𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭'.split('');
+      const small = '𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇'.split('');
+      return [...text].map(c => {
+        const code = c.charCodeAt(0);
+        if (code >= 65 && code <= 90) return map[code - 65];
+        if (code >= 97 && code <= 122) return small[code - 97];
+        return c;
+      }).join('');
     }
 
     function toItalicBoldSans(text) {
-      const map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-      const boldItalic = "𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕" +
-                         "𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯";
-      return text.split("").map(c => {
-        let i = map.indexOf(c);
-        return i >= 0 ? boldItalic[i] : c;
-      }).join("");
+      const map = '𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕'.split('');
+      const small = '𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯'.split('');
+      return [...text].map(c => {
+        const code = c.charCodeAt(0);
+        if (code >= 65 && code <= 90) return map[code - 65];
+        if (code >= 97 && code <= 122) return small[code - 97];
+        return c;
+      }).join('');
     }
 
     function toItalicBoldSerif(text) {
-      const map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-      const boldItalicSerif = "𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁" +
-                              "𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛";
-      return text.split("").map(c => {
-        let i = map.indexOf(c);
-        return i >= 0 ? boldItalicSerif[i] : c;
-      }).join("");
+      const map = '𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁'.split('');
+      const small = '𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛'.split('');
+      return [...text].map(c => {
+        const code = c.charCodeAt(0);
+        if (code >= 65 && code <= 90) return map[code - 65];
+        if (code >= 97 && code <= 122) return small[code - 97];
+        return c;
+      }).join('');
     }
-
-    function updateText() {
-      const text = document.getElementById('inputText').value;
-      document.getElementById('boldSerif').innerText = toBoldSerif(text);
-      document.getElementById('boldSans').innerText = toBoldSans(text);
-      document.getElementById('italicBoldSans').innerText = toItalicBoldSans(text);
-      document.getElementById('italicBoldSerif').innerText = toItalicBoldSerif(text);
-    }
-
-    function copyText(id) {
-      const el = document.getElementById(id);
-      navigator.clipboard.writeText(el.innerText).then(() => {
-        alert("Copied!");
-      });
-    }
-  </script>
-</body>
+  </script></body>
 </html>
