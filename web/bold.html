@@ -1,3 +1,4 @@
+<!-- Full working HTML with copy + toast, no download -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,11 +75,6 @@
       color: teal;
       margin-bottom: 5px;
     }
-    .button-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
     #toast {
       visibility: hidden;
       min-width: 160px;
@@ -118,10 +114,7 @@
       <div class="text-row">
         <div class="styled-content" id="boldSerif"></div>
       </div>
-      <div class="button-row">
-        <button onclick="copyText('boldSerif')">Copy</button>
-        <button onclick="downloadText('boldSerif', 'Bold_Serif')">Download</button>
-      </div>
+      <button onclick="copyText('boldSerif')">Copy</button>
     </div>
 
     <div class="styled-text">
@@ -129,10 +122,7 @@
       <div class="text-row">
         <div class="styled-content" id="boldSans"></div>
       </div>
-      <div class="button-row">
-        <button onclick="copyText('boldSans')">Copy</button>
-        <button onclick="downloadText('boldSans', 'Bold_Sans')">Download</button>
-      </div>
+      <button onclick="copyText('boldSans')">Copy</button>
     </div>
 
     <div class="styled-text">
@@ -140,10 +130,7 @@
       <div class="text-row">
         <div class="styled-content" id="italicBoldSerif"></div>
       </div>
-      <div class="button-row">
-        <button onclick="copyText('italicBoldSerif')">Copy</button>
-        <button onclick="downloadText('italicBoldSerif', 'Italic_Bold_Serif')">Download</button>
-      </div>
+      <button onclick="copyText('italicBoldSerif')">Copy</button>
     </div>
 
     <div class="styled-text">
@@ -151,10 +138,7 @@
       <div class="text-row">
         <div class="styled-content" id="italicBoldSans"></div>
       </div>
-      <div class="button-row">
-        <button onclick="copyText('italicBoldSans')">Copy</button>
-        <button onclick="downloadText('italicBoldSans', 'Italic_Bold_Sans')">Download</button>
-      </div>
+      <button onclick="copyText('italicBoldSans')">Copy</button>
     </div>
   </div>
 
@@ -199,17 +183,6 @@
       navigator.clipboard.writeText(text).then(() => {
         showToast("Copied to Clipboard");
       });
-    }
-
-    function downloadText(id, name) {
-      const text = document.getElementById(id).textContent;
-      const blob = new Blob([text], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name + ".txt";
-      link.click();
-      URL.revokeObjectURL(url);
     }
 
     function showToast(msg) {
