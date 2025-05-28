@@ -3,165 +3,74 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Text Styler</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
   <style>
     body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #dff9fb;
       margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #e0f7f9;
-      color: #004d4d;
-    }.container {
-  max-width: 500px;
-  margin: 40px auto;
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.2);
-}
-
-h1 {
-  text-align: center;
-  color: teal;
-  font-size: 28px;
-}
-
-.input-container {
-  display: flex;
-  padding: 10px;
-  background: #f9f9f9;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-.input-container textarea {
-  flex: 1;
-  resize: none;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  outline: none;
-  height: 45px;
-}
-
-.input-container button {
-  margin-left: 10px;
-  padding: 0 16px;
-  font-size: 20px;
-  background: teal;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.output {
-  background-color: #e6fafa;
-  margin-bottom: 15px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.styled-text {
-  overflow-wrap: anywhere;
-}
-
-.copy-btn {
-  background: teal;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #0984e3;
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      resize: vertical;
+    }
+    .output {
+      background: #ecf0f1;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      word-wrap: break-word;
+      font-family: 'Roboto', sans-serif;
+    }
+    .bold {
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Text Styler</h1>
-    <div class="input-container">
-      <textarea id="userInput" placeholder="Type something..."></textarea>
-      <button onclick="applyStyles()">+</button>
-    </div>
-    <div id="outputArea"></div>
+    <h2>Text Styler</h2>
+    <textarea id="textInput" rows="4" placeholder="Type something..."></textarea>
+    <div id="styledOutput" class="output"></div>
   </div>  <script>
-    function applyStyles() {
-      const input = document.getElementById('userInput').value;
-      const outputArea = document.getElementById('outputArea');
-      outputArea.innerHTML = '';
+    const textInput = document.getElementById('textInput');
+    const styledOutput = document.getElementById('styledOutput');
 
-      const styles = [
-        toBoldSerif(input),
-        toBoldSans(input),
-        toItalicBoldSans(input),
-        toItalicBoldSerif(input)
-      ];
+    textInput.addEventListener('input', () => {
+      const text = textInput.value;
+      styledOutput.textContent = convertToBold(text);
+    });
 
-      styles.forEach(text => {
-        const div = document.createElement('div');
-        div.className = 'output';
-
-        const span = document.createElement('span');
-        span.className = 'styled-text';
-        span.textContent = text;
-
-        const btn = document.createElement('button');
-        btn.className = 'copy-btn';
-        btn.textContent = 'Copy';
-        btn.onclick = () => navigator.clipboard.writeText(text);
-
-        div.appendChild(span);
-        div.appendChild(btn);
-        outputArea.appendChild(div);
-      });
-    }
-
-    function toBoldSerif(text) {
-      const map = '𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙'.split('');
-      const small = '𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳'.split('');
-      return [...text].map(c => {
-        const code = c.charCodeAt(0);
-        if (code >= 65 && code <= 90) return map[code - 65];
-        if (code >= 97 && code <= 122) return small[code - 97];
-        return c;
-      }).join('');
-    }
-
-    function toBoldSans(text) {
-      const map = '𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭'.split('');
-      const small = '𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇'.split('');
-      return [...text].map(c => {
-        const code = c.charCodeAt(0);
-        if (code >= 65 && code <= 90) return map[code - 65];
-        if (code >= 97 && code <= 122) return small[code - 97];
-        return c;
-      }).join('');
-    }
-
-    function toItalicBoldSans(text) {
-      const map = '𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕'.split('');
-      const small = '𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯'.split('');
-      return [...text].map(c => {
-        const code = c.charCodeAt(0);
-        if (code >= 65 && code <= 90) return map[code - 65];
-        if (code >= 97 && code <= 122) return small[code - 97];
-        return c;
-      }).join('');
-    }
-
-    function toItalicBoldSerif(text) {
-      const map = '𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁'.split('');
-      const small = '𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛'.split('');
-      return [...text].map(c => {
-        const code = c.charCodeAt(0);
-        if (code >= 65 && code <= 90) return map[code - 65];
-        if (code >= 97 && code <= 122) return small[code - 97];
-        return c;
+    function convertToBold(text) {
+      const boldOffset = 0x1D400 - 0x41; // Unicode math bold A offset
+      return text.split('').map(char => {
+        const code = char.charCodeAt(0);
+        if (code >= 0x41 && code <= 0x5A) {
+          return String.fromCodePoint(boldOffset + code);
+        } else if (code >= 0x61 && code <= 0x7A) {
+          return String.fromCodePoint(boldOffset + code + 26);
+        } else {
+          return char;
+        }
       }).join('');
     }
   </script></body>
