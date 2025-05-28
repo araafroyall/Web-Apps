@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Khatabook</title>
+  <script src="github.js"></script>
+  <script src="main.js"></script>
+  <script src="ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", loadCustomers);
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-teal-100 p-4 text-sm text-gray-800">
+  <div class="text-center text-teal-900 text-2xl font-bold mb-4">Khatabook</div>
+
+  <div id="customerSection">
+    <div class="mb-3">
+      <input id="custName" type="text" placeholder="Customer Name" class="border p-2 rounded w-full mb-1"/>
+      <input id="custPhone" type="text" placeholder="Phone Number" class="border p-2 rounded w-full"/>
+      <button onclick="addCustomer()" class="bg-teal-600 text-white px-4 py-2 mt-2 rounded w-full">Add Customer</button>
+    </div>
+    <div id="customerList" class="grid gap-2"></div>
+  </div>
+
+  <div id="ledgerSection" class="hidden">
+    <div class="flex justify-between items-center mb-2">
+      <div id="ledgerTitle" class="text-lg font-semibold"></div>
+      <button onclick="backToList()" class="text-sm text-teal-700 underline">Back</button>
+    </div>
+    <div class="flex gap-2 mb-2">
+      <input id="entryAmount" type="number" placeholder="Amount" class="border p-2 rounded w-1/2"/>
+      <input id="entryNote" type="text" placeholder="Note" class="border p-2 rounded w-1/2"/>
+    </div>
+    <div class="flex gap-2 mb-3">
+      <button onclick="addEntry('credit')" class="bg-green-500 text-white px-4 py-1 rounded w-1/2">Credit</button>
+      <button onclick="addEntry('debit')" class="bg-red-500 text-white px-4 py-1 rounded w-1/2">Debit</button>
+    </div>
+    <div id="balanceView" class="font-bold mb-2"></div>
+    <div id="ledgerList"></div>
+  </div>
+</body>
+</html>
