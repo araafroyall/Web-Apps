@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#008080">
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bold Text Maker</title>
@@ -206,7 +209,15 @@
     }
   </script>
 
-
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log("Service Worker registered!"))
+        .catch(err => console.error("SW registration failed:", err));
+    });
+  }
+</script>
 
 </body>
 </html>
