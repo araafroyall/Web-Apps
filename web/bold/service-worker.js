@@ -1,8 +1,8 @@
 const CACHE_NAME = "bold-text-maker-cache-v1";
 const urlsToCache = [
   "/",
-  "service-worker.js",
-  "manifest.json"
+  "/manifest.json",
+  "/service-worker.js"
 ];
 
 self.addEventListener("install", event => {
