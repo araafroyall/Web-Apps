@@ -4,6 +4,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Image to Base64</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       padding: 0;
@@ -14,11 +17,13 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      flex-direction: column;
     }
     .container {
       width: 100%;
       max-width: 600px;
       padding: 20px;
+      margin: auto;
     }
     h1 {
       text-align: center;
@@ -30,9 +35,21 @@
       padding: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    input[type="file"] {
+    label.custom-file {
       display: block;
+      background: #00796b;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
       margin-bottom: 20px;
+    }
+    label.custom-file:hover {
+      background-color: #004d40;
+    }
+    input[type="file"] {
+      display: none;
     }
     textarea {
       width: 100%;
@@ -63,6 +80,19 @@
     button:hover {
       background-color: #004d40;
     }
+    .footer {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #004d40;
+      text-align: center;
+    }
+    .copy-note {
+      text-align: center;
+      color: #00796b;
+      font-size: 14px;
+      display: none;
+      margin-top: 10px;
+    }
     @media (max-width: 600px) {
       textarea {
         height: 150px;
@@ -74,11 +104,14 @@
   <div class="container">
     <h1>Image to Base64</h1>
     <div class="card">
-      <input type="file" accept="image/*" onchange="convertToBase64(event)">
+      <label class="custom-file" id="fileLabel">Choose File</label>
+      <input type="file" accept="image/*" id="fileInput" onchange="convertToBase64(event)">
       <textarea id="output" readonly placeholder="Base64 will appear here..."></textarea>
       <div class="info" id="base64Info">Length: 0 characters | Size: 0 KB</div>
       <button onclick="copyBase64()">Copy</button>
+      <div class="copy-note" id="copyNote">Copied to clipboard!</div>
     </div>
+    <div class="footer">Feature is Provided by Araaf Royall</div>
   </div>  <script>
     function convertToBase64(event) {
       const file = event.target.files[0];
@@ -91,6 +124,7 @@
         const length = base64.length;
         const sizeKB = ((length * 3) / 4 / 1024).toFixed(2);
         document.getElementById('base64Info').textContent = 'Length: ' + length + ' characters | Size: ' + sizeKB + ' KB';
+        document.getElementById('fileLabel').innerText = 'Choose Another File';
       };
       reader.readAsDataURL(file);
     }
@@ -100,6 +134,15 @@
       textarea.select();
       textarea.setSelectionRange(0, 999999);
       document.execCommand("copy");
+      const note = document.getElementById('copyNote');
+      note.style.display = 'block';
+      setTimeout(() => {
+        note.style.display = 'none';
+      }, 2000);
     }
+
+    document.getElementById('fileLabel').addEventListener('click', function () {
+      document.getElementById('fileInput').click();
+    });
   </script></body>
 </html>
