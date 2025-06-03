@@ -10,10 +10,14 @@
       background-color: #e0f2f1;
       font-family: 'Segoe UI', sans-serif;
       color: #004d40;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
     .container {
+      width: 100%;
       max-width: 600px;
-      margin: auto;
       padding: 20px;
     }
     h1 {
@@ -39,6 +43,12 @@
       resize: vertical;
       font-size: 14px;
     }
+    .info {
+      font-size: 14px;
+      margin-top: 10px;
+      color: #00695c;
+      text-align: right;
+    }
     button {
       background-color: #00796b;
       color: white;
@@ -48,6 +58,7 @@
       font-size: 16px;
       cursor: pointer;
       margin-top: 10px;
+      width: 100%;
     }
     button:hover {
       background-color: #004d40;
@@ -65,6 +76,7 @@
     <div class="card">
       <input type="file" accept="image/*" onchange="convertToBase64(event)">
       <textarea id="output" readonly placeholder="Base64 will appear here..."></textarea>
+      <div class="info" id="base64Info">Length: 0 characters | Size: 0 KB</div>
       <button onclick="copyBase64()">Copy</button>
     </div>
   </div>  <script>
@@ -73,7 +85,12 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(e) {
-        document.getElementById('output').value = e.target.result;
+        const fullDataURL = e.target.result;
+        const base64 = fullDataURL.split(',')[1];
+        document.getElementById('output').value = base64;
+        const length = base64.length;
+        const sizeKB = ((length * 3) / 4 / 1024).toFixed(2);
+        document.getElementById('base64Info').textContent = 'Length: ' + length + ' characters | Size: ' + sizeKB + ' KB';
       };
       reader.readAsDataURL(file);
     }
@@ -81,7 +98,7 @@
     function copyBase64() {
       const textarea = document.getElementById('output');
       textarea.select();
-      textarea.setSelectionRange(0, 99999);
+      textarea.setSelectionRange(0, 999999);
       document.execCommand("copy");
     }
   </script></body>
