@@ -1,106 +1,131 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Teal Video Compressor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Compressor</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#e0f7f7;color:#004d4d;font-family:sans-serif}
-    header{background:#008080;color:#fff;padding:1rem;text-align:center;font-size:1.5rem}
-    .container{max-width:600px;margin:auto;padding:1rem}
-    .card{background:#fff;padding:1rem;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)}
-    input,select,button{width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:5px}
-    button{background:#009999;color:#fff;font-weight:bold;cursor:pointer}
-    button:disabled{background:#76cfcf;cursor:default}
-    .progress{width:100%;height:20px;background:#ccc;border-radius:10px;overflow:hidden;margin:1rem 0}
-    .progress-bar{height:100%;background:#00b3b3;width:0;transition:width .2s}
-    #status{margin-bottom:1rem;text-align:center;color:#006666;font-size:0.95rem}
-    .download{display:none;text-align:center}
-    .download a{color:#004d4d;font-weight:bold;text-decoration:none}
+    :root {
+      --teal: #008080;
+      --bg: #f5f5f5;
+      --text: #333;
+    }
+    * { box-sizing: border-box; margin:0; padding:0 }
+    body {
+      font-family: sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card h1 {
+      font-size: 1.25rem;
+      color: var(--teal);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .field {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    input[type="file"],
+    select,
+    button {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+    progress {
+      width: 100%;
+      height: 1rem;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
-  <header>📹 Teal Video Compressor</header>
-  <div class="container">
-    <div class="card">
-      <input type="file" id="videoInput" accept="video/*">
-      <select id="quality">
-        <option value="360">Low (360p)</option>
-        <option value="480">Medium (480p)</option>
-        <option value="720">High (720p)</option>
-      </select>
-      <button id="startBtn">Start Compression</button>
-      <div id="status">Ready ✔️</div>
-      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
-      <div class="download" id="downloadSection">
-        ✅ Done! <a id="downloadLink" href="#" download="compressed.mp4">Download</a>
-      </div>
+  <div class="card">
+    <h1>Video Compressor 🎥</h1>
+    <div class="field">
+      <label for="videoFile">Select Video</label>
+      <input type="file" id="videoFile" accept="video/*">
     </div>
-  </div>  <script type="module">
-    import { createFFmpeg, fetchFile } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.1/dist/ffmpeg.min.js';
-    const status = document.getElementById('status');
-    const progressBar = document.getElementById('progressBar');
-    const videoInput = document.getElementById('videoInput');
-    const qualitySel = document.getElementById('quality');
-    const startBtn = document.getElementById('startBtn');
-    const dlLink = document.getElementById('downloadLink');
-    const dlSection = document.getElementById('downloadSection');
+    <div class="field">
+      <label for="quality">Quality</label>
+      <select id="quality">
+        <option value="300k">Low (300 kbps)</option>
+        <option value="800k" selected>Medium (800 kbps)</option>
+        <option value="1500k">High (1500 kbps)</option>
+      </select>
+    </div>
+    <button id="compressBtn" disabled>Compress &amp; Download</button>
+    <progress id="progressBar" value="0" max="100"></progress>
+  </div>
 
-    const ffmpeg = createFFmpeg({
-      log: true,
-      corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.1/dist/ffmpeg-core.js',
-      progress: ({ ratio }) => {
-        const pct = Math.round(ratio * 100);
-        console.log('Progress:', pct);
-        progressBar.style.width = pct + '%';
-        status.textContent = 'Compressing: ' + pct + '%';
-      }
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.7/dist/ffmpeg.min.js"></script>
+  <script>
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: false });
+    const fileInput = document.getElementById('videoFile');
+    const qualitySelect = document.getElementById('quality');
+    const btn = document.getElementById('compressBtn');
+    const bar = document.getElementById('progressBar');
+    let videoData, fname;
+
+    fileInput.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      videoData = await fetchFile(file);
+      fname = file.name.replace(/\.[^/.]+$/, '');
+      btn.disabled = false;
     });
 
-    startBtn.addEventListener('click', async () => {
-      console.log('Start button clicked');
-      status.textContent = 'Start clicked';
-      const file = videoInput.files[0];
-      if (!file) {
-        alert('Please select a video file first!');
-        return;
-      }
-      const quality = qualitySel.value;
-      const outputName = `out_${quality}.mp4`;
-      startBtn.disabled = true;
-      dlSection.style.display = 'none';
-      progressBar.style.width = '0%';
-      try {
-        status.textContent = 'Loading ffmpeg...';
-        console.log('Loading ffmpeg');
-        if (!ffmpeg.isLoaded()) await ffmpeg.load();
-        console.log('ffmpeg loaded');
-        status.textContent = 'Writing file to FS...';
-        ffmpeg.FS('writeFile', file.name, await fetchFile(file));
-        console.log('File written:', file.name);
-        status.textContent = 'Running compression...';
-        await ffmpeg.run(
-          '-i', file.name,
-          '-vf', `scale=-2:${quality}`,
-          '-c:v', 'libx264',
-          '-preset', 'fast',
-          '-c:a', 'aac',
-          outputName
-        );
-        console.log('Compression run complete');
-        const data = ffmpeg.FS('readFile', outputName);
-        const blob = new Blob([data.buffer], { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        dlLink.href = url;
-        dlLink.download = `compressed_${quality}p.mp4`;
-        dlSection.style.display = 'block';
-        status.textContent = '✅ Compression complete!';
-      } catch (err) {
-        console.error('Error:', err);
-        status.textContent = '❌ Error: ' + err.message;
-      } finally {
-        startBtn.disabled = false;
-      }
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      if (!ffmpeg.isLoaded()) await ffmpeg.load();
+      ffmpeg.FS('writeFile', 'in.mp4', videoData);
+      ffmpeg.setProgress(({ ratio }) => {
+        bar.value = Math.round(ratio * 100);
+      });
+      const bitrate = qualitySelect.value;
+      await ffmpeg.run('-i', 'in.mp4', '-b:v', bitrate, 'out.mp4');
+      const data = ffmpeg.FS('readFile', 'out.mp4');
+      const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${fname}-compressed.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      btn.disabled = false;
+      bar.value = 0;
     });
-  </script></body>
+  </script>
+</body>
 </html>
