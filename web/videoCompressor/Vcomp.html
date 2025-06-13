@@ -1,158 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Video Compressor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teal Video Compressor</title>
   <style>
     :root {
       --teal: #008080;
-      --bg: #f5f5f5;
-      --text: #333;
+      --bg: #f0fdfc;
+      --text: #222;
     }
-    * { box-sizing: border-box; margin:0; padding:0 }
     body {
+      margin: 0;
+      padding: 1rem;
       font-family: sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
+      justify-content: center;
     }
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .container {
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
+      background: white;
       padding: 1rem;
-      margin-bottom: 1rem;
+      border-radius: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .card h1 {
-      font-size: 1.25rem;
+    h1 {
+      text-align: center;
       color: var(--teal);
       margin-bottom: 1rem;
-      text-align: center;
     }
-    .field { margin-bottom: 1rem }
-    label { display: block; margin-bottom: .25rem }
+    label {
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      display: block;
+    }
     input, select, button {
       width: 100%;
-      padding: .5rem;
+      margin-top: 0.3rem;
+      padding: 0.6rem;
+      border-radius: 0.4rem;
       border: 1px solid #ccc;
-      border-radius: 4px;
       font-size: 1rem;
     }
     button {
       background: var(--teal);
-      color: #fff;
+      color: white;
       border: none;
       cursor: pointer;
-      margin-top: .5rem;
+      margin-top: 1rem;
     }
     button:disabled {
-      background: #999;
-      cursor: not-allowed;
+      background: #888;
     }
     progress {
       width: 100%;
       height: 1rem;
-      margin-top: .5rem;
+      margin-top: 1rem;
     }
     .log {
-      font-size: .85rem;
-      color: #666;
-      max-height: 4rem;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      white-space: pre-wrap;
+      background: #f9f9f9;
+      padding: 0.5rem;
+      border-radius: 6px;
+      max-height: 80px;
       overflow-y: auto;
-      margin-top: .5rem;
+    }
+    .status {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-weight: bold;
+      color: var(--teal);
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Video Compressor 🎥</h1>
-    <div class="field">
-      <label for="videoFile">Select Video</label>
-      <input type="file" id="videoFile" accept="video/*">
-    </div>
-    <div class="field">
-      <label for="quality">Quality</label>
-      <select id="quality">
-        <option value="300k">Low (300 kbps)</option>
-        <option value="800k" selected>Medium (800 kbps)</option>
-        <option value="1500k">High (1500 kbps)</option>
-      </select>
-    </div>
-    <button id="compressBtn" disabled>Compress &amp; Download</button>
+  <div class="container">
+    <h1>🎥 Video Compressor</h1>
+    <div class="status" id="statusText">Loading FFmpeg Library…</div>
+    <label for="videoInput">Select Video</label>
+    <input type="file" id="videoInput" accept="video/*" disabled />
+    <label for="quality">Select Quality</label>
+    <select id="quality" disabled>
+      <option value="300k">Low (300 kbps)</option>
+      <option value="800k" selected>Medium (800 kbps)</option>
+      <option value="1500k">High (1500 kbps)</option>
+    </select>
+    <button id="compressBtn" disabled>Compress & Download</button>
     <progress id="progressBar" value="0" max="100"></progress>
-    <div class="log" id="log"></div>
+    <div class="log" id="logBox"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.7/dist/ffmpeg.min.js"></script>
   <script>
-    const logEl = document.getElementById('log');
-    const fileInput = document.getElementById('videoFile');
-    const qualitySelect = document.getElementById('quality');
-    const btn = document.getElementById('compressBtn');
-    const progressBar = document.getElementById('progressBar');
     const { createFFmpeg, fetchFile } = FFmpeg;
     const ffmpeg = createFFmpeg({ log: true });
-    let videoData, originalName;
 
-    function log(msg) {
-      console.log(msg);
-      logEl.textContent += msg + '\n';
-      logEl.scrollTop = logEl.scrollHeight;
-    }
+    const statusText = document.getElementById("statusText");
+    const logBox = document.getElementById("logBox");
+    const fileInput = document.getElementById("videoInput");
+    const qualitySelect = document.getElementById("quality");
+    const compressBtn = document.getElementById("compressBtn");
+    const progressBar = document.getElementById("progressBar");
 
-    async function preloadFFmpeg() {
-      log('Loading FFmpeg core…');
+    let videoData = null;
+    let fileName = null;
+
+    const log = (msg) => {
+      logBox.textContent += msg + "\n";
+      logBox.scrollTop = logBox.scrollHeight;
+    };
+
+    const init = async () => {
+      log("Loading FFmpeg...");
       await ffmpeg.load();
-      log('FFmpeg loaded ✅');
+      statusText.textContent = "✅ Ready to Compress";
       fileInput.disabled = false;
-    }
+      qualitySelect.disabled = false;
+      compressBtn.disabled = true;
+      log("FFmpeg Loaded Successfully");
+    };
 
-    fileInput.disabled = true;
-    preloadFFmpeg();
+    init();
 
-    fileInput.addEventListener('change', async () => {
+    fileInput.addEventListener("change", async () => {
       const file = fileInput.files[0];
       if (!file) return;
-      log(`Picked: ${file.name}`);
+      fileName = file.name.replace(/\.[^/.]+$/, "");
       videoData = await fetchFile(file);
-      const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
-      originalName = file.name.replace(/\.[^/.]+$/, '');
-      btn.disabled = false;
+      compressBtn.disabled = false;
+      log(`Selected file: ${file.name}`);
     });
 
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
+    compressBtn.addEventListener("click", async () => {
+      compressBtn.disabled = true;
       progressBar.value = 0;
-      log('Starting compression…');
+      log("Compression started…");
+
+      const bitrate = qualitySelect.value;
+      const ext = "mp4";
+
+      ffmpeg.FS("writeFile", `input.${ext}`, videoData);
+
       ffmpeg.setProgress(({ ratio }) => {
         progressBar.value = Math.round(ratio * 100);
       });
+
       try {
-        ffmpeg.FS('writeFile', `in.${originalName.split('.').pop()}`, videoData);
-        const bitrate = qualitySelect.value;
-        await ffmpeg.run('-i', `in.${originalName.split('.').pop()}`, '-b:v', bitrate, 'out.mp4');
-        const data = ffmpeg.FS('readFile', 'out.mp4');
-        log('Compression done 🎉');
-        const blob = new Blob([data.buffer], { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${originalName}-compressed.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } catch (e) {
-        log('Error: ' + e.message);
-      } finally {
-        btn.disabled = false;
-        progressBar.value = 0;
+        await ffmpeg.run("-i", `input.${ext}`, "-b:v", bitrate, `output.${ext}`);
+        const outData = ffmpeg.FS("readFile", `output.${ext}`);
+        const blob = new Blob([outData.buffer], { type: "video/mp4" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${fileName}-compressed.mp4`;
+        link.click();
+        log("✅ Compression complete. File downloaded.");
+      } catch (err) {
+        log("❌ Compression error: " + err.message);
       }
+
+      compressBtn.disabled = false;
+      progressBar.value = 0;
     });
   </script>
 </body>
