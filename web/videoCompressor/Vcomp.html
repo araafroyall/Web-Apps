@@ -1,26 +1,27 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Smart Teal Video Compressor</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Teal Video Compressor (WASM Worker)</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #e0f7f7; color: #004d4d; font-family: sans-serif; }
-    header { background: #008080; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; }
-    .container { max-width: 600px; margin: auto; padding: 1rem; }
-    .card { background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    input, select, button { width: 100%; padding: 0.7rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ccc; }
-    button { background: #009999; color: white; font-weight: bold; cursor: pointer; }
-    button:disabled { background: #76cfcf; cursor: default; }
-    .progress { width: 100%; height: 20px; background: #ccc; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
-    .progress-bar { height: 100%; background: #00b3b3; width: 0%; transition: width 0.2s; }
-    .download { display: none; text-align: center; margin-top: 1rem; }
-    .download a { color: #004d4d; font-weight: bold; text-decoration: none; }
-    #statusText { font-size: 0.95rem; padding: 0.5rem 0; text-align: center; color: #006666; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#e0f7f7;color:#004d4d;font-family:sans-serif}
+    header{background:#008080;color:#fff;padding:1rem;text-align:center;font-size:1.5rem}
+    .container{max-width:600px;margin:auto;padding:1rem}
+    .card{background:#fff;padding:1rem;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)}
+    input,select,button{width:100%;padding:0.7rem;margin-bottom:1rem;border:1px solid #ccc;border-radius:5px}
+    button{background:#009999;color:#fff;font-weight:bold;cursor:pointer}
+    button:disabled{background:#76cfcf;cursor:default}
+    .progress{width:100%;height:20px;background:#ccc;border-radius:10px;overflow:hidden;margin:1rem 0}
+    .progress-bar{height:100%;background:#00b3b3;width:0;transition:width .2s}
+    #status{margin-bottom:1rem;text-align:center;color:#006666}
+    .download{display:none;text-align:center}
+    .download a{color:#004d4d;font-weight:bold;text-decoration:none}
   </style>
 </head>
 <body>
-  <header>📹 Smart Teal Video Compressor</header>
+  <header>📹 Teal Video Compressor (Worker)</header>
   <div class="container">
     <div class="card">
       <input type="file" id="videoInput" accept="video/*">
@@ -30,76 +31,70 @@
         <option value="720">High (720p)</option>
       </select>
       <button id="startBtn">Start Compression</button>
-      <div id="statusText">Ready</div>
+      <div id="status">Ready ✔️</div>
       <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
       <div class="download" id="downloadSection">
-        ✅ Done! <a id="downloadLink" href="#" download="compressed.mp4">Download Video</a>
+        ✅ Done! <a id="downloadLink" href="#" download="compressed.mp4">Download</a>
       </div>
     </div>
-  </div>  <script type="module">
-    import { createFFmpeg, fetchFile } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.1/dist/ffmpeg.min.js';
-    const statusText = document.getElementById('statusText');
-    const ffmpeg = createFFmpeg({
-      log: true,
-      progress: p => {
-        const pct = Math.round(p.ratio * 100);
-        document.getElementById('progressBar').style.width = pct + '%';
-        statusText.textContent = `Compressing: ${pct}%`;
+  </div>
+
+  <script type="module">
+    import { createWorker } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.1/dist/ffmpeg.min.js';
+
+    const status = document.getElementById('status');
+    const progressBar = document.getElementById('progressBar');
+    const videoInput = document.getElementById('videoInput');
+    const qualitySel = document.getElementById('quality');
+    const startBtn = document.getElementById('startBtn');
+    const dlLink = document.getElementById('downloadLink');
+    const dlSection = document.getElementById('downloadSection');
+
+    const worker = createWorker({
+      logger: m => console.log(m),
+      progress: ({ ratio }) => {
+        const pct = Math.round(ratio * 100);
+        progressBar.style.width = pct + '%';
+        status.textContent = 'Compressing: ' + pct + '%';
       }
     });
 
-    document.getElementById('startBtn').onclick = async () => {
-      const fileInput = document.getElementById('videoInput');
-      const file = fileInput.files[0];
-      const quality = document.getElementById('quality').value;
-
-      if (!file) {
-        alert('Please select a video file first!');
-        return;
-      }
-
-      const output = `out_${quality}.mp4`;
-      const startBtn = document.getElementById('startBtn');
-      const progressBar = document.getElementById('progressBar');
-      const downloadSection = document.getElementById('downloadSection');
-      const downloadLink = document.getElementById('downloadLink');
+    startBtn.addEventListener('click', async () => {
+      const file = videoInput.files[0];
+      if(!file){return alert('Select video first!')}
 
       startBtn.disabled = true;
+      dlSection.style.display = 'none';
       progressBar.style.width = '0%';
-      downloadSection.style.display = 'none';
-      statusText.textContent = 'Loading ffmpeg...';
+      status.textContent = 'Loading worker...';
 
-      try {
-        if (!ffmpeg.isLoaded()) {
-          await ffmpeg.load();
-          statusText.textContent = 'ffmpeg loaded. Starting compression...';
-        } else {
-          statusText.textContent = 'ffmpeg already loaded. Starting compression...';
-        }
+      await worker.load();
+      status.textContent = 'Writing file…';
+      await worker.write(file.name, await file.arrayBuffer());
 
-        ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+      const q = qualitySel.value;
+      const outName = `out_${q}.mp4`;
 
-        await ffmpeg.run(
-          '-i', file.name,
-          '-vf', `scale=-2:${quality}`,
-          '-c:v', 'libx264',
-          '-preset', 'veryfast',
-          '-c:a', 'aac',
-          output
-        );
+      status.textContent = 'Running ffmpeg…';
+      await worker.exec(
+        `-i`, file.name,
+        `-vf`, `scale=-2:${q}`,
+        `-c:v`, `libx264`,
+        `-preset`, `fast`,
+        `-c:a`, `aac`,
+        outName
+      );
 
-        const data = ffmpeg.FS('readFile', output);
-        const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
-        downloadLink.href = url;
-        downloadLink.download = `compressed_${quality}p.mp4`;
-        downloadSection.style.display = 'block';
-        statusText.textContent = '✅ Compression complete!';
-      } catch (err) {
-        statusText.textContent = '❌ Error: ' + err.message;
-        console.error(err);
-      } finally {
-        startBtn.disabled = false;
-      }
-    };
-  </script></body>
+      const { data } = await worker.read(outName);
+      const blob = new Blob([data], { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+
+      dlLink.href = url;
+      dlLink.download = `compressed_${q}p.mp4`;
+      dlSection.style.display = 'block';
+      status.textContent = '✅ Compression complete!';
+      startBtn.disabled = false;
+    });
+  </script>
+</body>
 </html>
