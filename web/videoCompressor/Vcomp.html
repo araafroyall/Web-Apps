@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Teal Video Compressor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #e0f7f7; color: #004d4d; font-family: sans-serif; }
+    header { background: #008080; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; }
+    .container { max-width: 600px; margin: auto; padding: 1rem; }
+    .card { background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, select, button { width: 100%; padding: 0.7rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ccc; }
+    button { background: #009999; color: white; font-weight: bold; cursor: pointer; }
+    button:disabled { background: #76cfcf; cursor: default; }
+    .progress { width: 100%; height: 20px; background: #ccc; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+    .progress-bar { height: 100%; background: #00b3b3; width: 0%; transition: width 0.2s; }
+    .download { display: none; text-align: center; margin-top: 1rem; }
+    .download a { color: #004d4d; font-weight: bold; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>📹 Smart Teal Video Compressor</header>
+  <div class="container">
+    <div class="card">
+      <input type="file" id="videoInput" accept="video/*">
+      <select id="quality">
+        <option value="360">Low (360p)</option>
+        <option value="480">Medium (480p)</option>
+        <option value="720">High (720p)</option>
+      </select>
+      <button id="startBtn">Start Compression</button>
+      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="download" id="downloadSection">
+        ✅ Done! <a id="downloadLink" href="#" download="compressed.mp4">Download Video</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createFFmpeg, fetchFile } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.1/dist/ffmpeg.min.js';
+    const ffmpeg = createFFmpeg({ 
+      log: true, 
+      progress: p => {
+        const pct = Math.round(p.ratio * 100);
+        document.getElementById('progressBar').style.width = pct + '%';
+      }
+    });
+
+    document.getElementById('startBtn').onclick = async () => {
+      const file = document.getElementById('videoInput').files[0];
+      if (!file) return alert('Select a video first!');
+      const q = document.getElementById('quality').value;
+      const output = `out_${q}.mp4`;
+
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('downloadSection').style.display = 'none';
+      document.getElementById('progressBar').style.width = '0%';
+
+      if (!ffmpeg.isLoaded()) await ffmpeg.load();
+
+      ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+      await ffmpeg.run(
+        '-i', file.name,
+        '-vf', `scale=-2:${q}`,
+        '-c:v', 'libx264',
+        '-preset', 'veryfast',
+        '-c:a', 'aac',
+        output
+      );
+      const data = ffmpeg.FS('readFile', output);
+      const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+      const link = document.getElementById('downloadLink');
+      link.href = url;
+      link.download = `compressed_${q}p.mp4`;
+
+      document.getElementById('downloadSection').style.display = 'block';
+      document.getElementById('startBtn').disabled = false;
+    };
+  </script>
+</body>
+</html>
