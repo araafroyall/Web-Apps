@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,6 +16,7 @@
     .progress-bar { height: 100%; background: #00b3b3; width: 0%; transition: width 0.2s; }
     .download { display: none; text-align: center; margin-top: 1rem; }
     .download a { color: #004d4d; font-weight: bold; text-decoration: none; }
+    #statusText { font-size: 0.95rem; padding: 0.5rem 0; text-align: center; color: #006666; }
   </style>
 </head>
 <body>
@@ -30,53 +30,76 @@
         <option value="720">High (720p)</option>
       </select>
       <button id="startBtn">Start Compression</button>
+      <div id="statusText">Ready</div>
       <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
       <div class="download" id="downloadSection">
         ✅ Done! <a id="downloadLink" href="#" download="compressed.mp4">Download Video</a>
       </div>
     </div>
-  </div>
-
-  <script type="module">
+  </div>  <script type="module">
     import { createFFmpeg, fetchFile } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.1/dist/ffmpeg.min.js';
-    const ffmpeg = createFFmpeg({ 
-      log: true, 
+    const statusText = document.getElementById('statusText');
+    const ffmpeg = createFFmpeg({
+      log: true,
       progress: p => {
         const pct = Math.round(p.ratio * 100);
         document.getElementById('progressBar').style.width = pct + '%';
+        statusText.textContent = `Compressing: ${pct}%`;
       }
     });
 
     document.getElementById('startBtn').onclick = async () => {
-      const file = document.getElementById('videoInput').files[0];
-      if (!file) return alert('Select a video first!');
-      const q = document.getElementById('quality').value;
-      const output = `out_${q}.mp4`;
+      const fileInput = document.getElementById('videoInput');
+      const file = fileInput.files[0];
+      const quality = document.getElementById('quality').value;
 
-      document.getElementById('startBtn').disabled = true;
-      document.getElementById('downloadSection').style.display = 'none';
-      document.getElementById('progressBar').style.width = '0%';
+      if (!file) {
+        alert('Please select a video file first!');
+        return;
+      }
 
-      if (!ffmpeg.isLoaded()) await ffmpeg.load();
+      const output = `out_${quality}.mp4`;
+      const startBtn = document.getElementById('startBtn');
+      const progressBar = document.getElementById('progressBar');
+      const downloadSection = document.getElementById('downloadSection');
+      const downloadLink = document.getElementById('downloadLink');
 
-      ffmpeg.FS('writeFile', file.name, await fetchFile(file));
-      await ffmpeg.run(
-        '-i', file.name,
-        '-vf', `scale=-2:${q}`,
-        '-c:v', 'libx264',
-        '-preset', 'veryfast',
-        '-c:a', 'aac',
-        output
-      );
-      const data = ffmpeg.FS('readFile', output);
-      const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
-      const link = document.getElementById('downloadLink');
-      link.href = url;
-      link.download = `compressed_${q}p.mp4`;
+      startBtn.disabled = true;
+      progressBar.style.width = '0%';
+      downloadSection.style.display = 'none';
+      statusText.textContent = 'Loading ffmpeg...';
 
-      document.getElementById('downloadSection').style.display = 'block';
-      document.getElementById('startBtn').disabled = false;
+      try {
+        if (!ffmpeg.isLoaded()) {
+          await ffmpeg.load();
+          statusText.textContent = 'ffmpeg loaded. Starting compression...';
+        } else {
+          statusText.textContent = 'ffmpeg already loaded. Starting compression...';
+        }
+
+        ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+
+        await ffmpeg.run(
+          '-i', file.name,
+          '-vf', `scale=-2:${quality}`,
+          '-c:v', 'libx264',
+          '-preset', 'veryfast',
+          '-c:a', 'aac',
+          output
+        );
+
+        const data = ffmpeg.FS('readFile', output);
+        const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+        downloadLink.href = url;
+        downloadLink.download = `compressed_${quality}p.mp4`;
+        downloadSection.style.display = 'block';
+        statusText.textContent = '✅ Compression complete!';
+      } catch (err) {
+        statusText.textContent = '❌ Error: ' + err.message;
+        console.error(err);
+      } finally {
+        startBtn.disabled = false;
+      }
     };
-  </script>
-</body>
+  </script></body>
 </html>
