@@ -35,18 +35,11 @@
       margin-bottom: 1rem;
       text-align: center;
     }
-    .field {
-      margin-bottom: 1rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.25rem;
-    }
-    input[type="file"],
-    select,
-    button {
+    .field { margin-bottom: 1rem }
+    label { display: block; margin-bottom: .25rem }
+    input, select, button {
       width: 100%;
-      padding: 0.5rem;
+      padding: .5rem;
       border: 1px solid #ccc;
       border-radius: 4px;
       font-size: 1rem;
@@ -56,7 +49,7 @@
       color: #fff;
       border: none;
       cursor: pointer;
-      margin-top: 0.5rem;
+      margin-top: .5rem;
     }
     button:disabled {
       background: #999;
@@ -65,7 +58,14 @@
     progress {
       width: 100%;
       height: 1rem;
-      margin-top: 0.5rem;
+      margin-top: .5rem;
+    }
+    .log {
+      font-size: .85rem;
+      color: #666;
+      max-height: 4rem;
+      overflow-y: auto;
+      margin-top: .5rem;
     }
   </style>
 </head>
@@ -86,45 +86,73 @@
     </div>
     <button id="compressBtn" disabled>Compress &amp; Download</button>
     <progress id="progressBar" value="0" max="100"></progress>
+    <div class="log" id="log"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.7/dist/ffmpeg.min.js"></script>
   <script>
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: false });
+    const logEl = document.getElementById('log');
     const fileInput = document.getElementById('videoFile');
     const qualitySelect = document.getElementById('quality');
     const btn = document.getElementById('compressBtn');
-    const bar = document.getElementById('progressBar');
-    let videoData, fname;
+    const progressBar = document.getElementById('progressBar');
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: true });
+    let videoData, originalName;
 
-    fileInput.addEventListener('change', async e => {
-      const file = e.target.files[0];
+    function log(msg) {
+      console.log(msg);
+      logEl.textContent += msg + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function preloadFFmpeg() {
+      log('Loading FFmpeg core…');
+      await ffmpeg.load();
+      log('FFmpeg loaded ✅');
+      fileInput.disabled = false;
+    }
+
+    fileInput.disabled = true;
+    preloadFFmpeg();
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
       if (!file) return;
+      log(`Picked: ${file.name}`);
       videoData = await fetchFile(file);
-      fname = file.name.replace(/\.[^/.]+$/, '');
+      const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+      originalName = file.name.replace(/\.[^/.]+$/, '');
       btn.disabled = false;
     });
 
     btn.addEventListener('click', async () => {
       btn.disabled = true;
-      if (!ffmpeg.isLoaded()) await ffmpeg.load();
-      ffmpeg.FS('writeFile', 'in.mp4', videoData);
+      progressBar.value = 0;
+      log('Starting compression…');
       ffmpeg.setProgress(({ ratio }) => {
-        bar.value = Math.round(ratio * 100);
+        progressBar.value = Math.round(ratio * 100);
       });
-      const bitrate = qualitySelect.value;
-      await ffmpeg.run('-i', 'in.mp4', '-b:v', bitrate, 'out.mp4');
-      const data = ffmpeg.FS('readFile', 'out.mp4');
-      const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${fname}-compressed.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      btn.disabled = false;
-      bar.value = 0;
+      try {
+        ffmpeg.FS('writeFile', `in.${originalName.split('.').pop()}`, videoData);
+        const bitrate = qualitySelect.value;
+        await ffmpeg.run('-i', `in.${originalName.split('.').pop()}`, '-b:v', bitrate, 'out.mp4');
+        const data = ffmpeg.FS('readFile', 'out.mp4');
+        log('Compression done 🎉');
+        const blob = new Blob([data.buffer], { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${originalName}-compressed.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (e) {
+        log('Error: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        progressBar.value = 0;
+      }
     });
   </script>
 </body>
