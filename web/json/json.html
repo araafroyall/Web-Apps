@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Full JSON Maker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0fdfa;
+      color: #0f766e;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h1 {
+      color: #0d9488;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border: 1px solid #5eead4;
+      border-radius: 0.5rem;
+      background-color: #ecfdf5;
+    }
+
+    input, select, textarea, button {
+      padding: 0.5rem;
+      border: 1px solid #94a3b8;
+      border-radius: 0.375rem;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      height: 200px;
+      font-family: monospace;
+      margin-top: 1rem;
+    }
+
+    button {
+      background-color: #14b8a6;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0d9488;
+    }
+
+    .nested {
+      margin-left: 1rem;
+      border-left: 2px dashed #5eead4;
+      padding-left: 0.5rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧩 JSON Maker (Full Featured)</h1>
+
+  <div class="field" id="main-field">
+    <input placeholder="Key" id="main-key" />
+    <select id="main-type">
+      <option value="string">String</option>
+      <option value="number">Number</option>
+      <option value="boolean">Boolean</option>
+      <option value="object">Nested Object</option>
+    </select>
+    <input placeholder="Value" id="main-value" />
+    <div class="nested" id="nested-container" style="display:none;"></div>
+    <button onclick="saveEntry()">💾 Save Entry</button>
+  </div>
+
+  <div class="field">
+    <input placeholder="Key to remove" id="remove-key" />
+    <button onclick="removeKey()">🗑️ Remove Key</button>
+  </div>
+
+  <div class="field">
+    <textarea placeholder="Paste full JSON to import..." id="import-json"></textarea>
+    <button onclick="importJson()">📥 Import JSON</button>
+  </div>
+
+  <button onclick="copyJson()">📋 Copy JSON</button>
+
+  <h3>📦 Output:</h3>
+  <textarea id="output" readonly></textarea>
+
+  <script>
+    let resultJson = {};
+
+    function createNestedField(parent) {
+      const container = document.createElement('div');
+      container.className = 'field';
+      const id = Date.now() + Math.random().toString(36).substr(2, 5);
+      container.innerHTML = `
+        <input placeholder="Key" id="key-${id}" />
+        <select id="type-${id}">
+          <option value="string">String</option>
+          <option value="number">Number</option>
+          <option value="boolean">Boolean</option>
+          <option value="object">Nested Object</option>
+        </select>
+        <input placeholder="Value" id="val-${id}" />
+        <div class="nested" id="nested-${id}" style="display:none;"></div>
+        <button onclick="this.parentElement.remove()">🗑️ Remove</button>
+      `;
+      const typeSelector = container.querySelector(`#type-${id}`);
+      const nestedDiv = container.querySelector(`#nested-${id}`);
+      typeSelector.addEventListener('change', () => {
+        if (typeSelector.value === 'object') {
+          nestedDiv.style.display = 'block';
+          if (!nestedDiv.hasChildNodes()) createNestedField(nestedDiv);
+        } else {
+          nestedDiv.innerHTML = '';
+          nestedDiv.style.display = 'none';
+        }
+      });
+
+      parent.appendChild(container);
+    }
+
+    document.getElementById('main-type').addEventListener('change', (e) => {
+      const nestedContainer = document.getElementById('nested-container');
+      if (e.target.value === 'object') {
+        nestedContainer.style.display = 'block';
+        if (!nestedContainer.hasChildNodes()) createNestedField(nestedContainer);
+      } else {
+        nestedContainer.innerHTML = '';
+        nestedContainer.style.display = 'none';
+      }
+    });
+
+    function buildJson(container) {
+      const obj = {};
+      Array.from(container.children).forEach(field => {
+        const key = field.querySelector('input[id^="key-"]')?.value;
+        const type = field.querySelector('select')?.value;
+        const val = field.querySelector('input[id^="val-"]')?.value;
+        const nested = field.querySelector('.nested');
+
+        if (!key) return;
+        if (type === 'number') obj[key] = Number(val);
+        else if (type === 'boolean') obj[key] = val === 'true';
+        else if (type === 'object') obj[key] = buildJson(nested);
+        else obj[key] = val;
+      });
+      return obj;
+    }
+
+    function saveEntry() {
+      const key = document.getElementById('main-key').value;
+      const type = document.getElementById('main-type').value;
+      const val = document.getElementById('main-value').value;
+      const nested = document.getElementById('nested-container');
+
+      if (!key) return alert('Please enter a key.');
+
+      if (type === 'number') resultJson[key] = Number(val);
+      else if (type === 'boolean') resultJson[key] = val === 'true';
+      else if (type === 'object') resultJson[key] = buildJson(nested);
+      else resultJson[key] = val;
+
+      document.getElementById('output').value = JSON.stringify(resultJson, null, 2);
+      clearMainForm();
+    }
+
+    function clearMainForm() {
+      document.getElementById('main-key').value = '';
+      document.getElementById('main-value').value = '';
+      document.getElementById('main-type').value = 'string';
+      document.getElementById('nested-container').innerHTML = '';
+      document.getElementById('nested-container').style.display = 'none';
+    }
+
+    function removeKey() {
+      const keyToRemove = document.getElementById('remove-key').value;
+      if (!keyToRemove) return alert('Enter a key to remove.');
+      if (keyToRemove in resultJson) {
+        delete resultJson[keyToRemove];
+        document.getElementById('output').value = JSON.stringify(resultJson, null, 2);
+        document.getElementById('remove-key').value = '';
+      } else {
+        alert('Key not found in current JSON.');
+      }
+    }
+
+    function importJson() {
+      const text = document.getElementById('import-json').value;
+      try {
+        resultJson = JSON.parse(text);
+        document.getElementById('output').value = JSON.stringify(resultJson, null, 2);
+        alert('✅ JSON imported successfully!');
+        document.getElementById('import-json').value = '';
+      } catch (err) {
+        alert('❌ Invalid JSON');
+      }
+    }
+
+    function copyJson() {
+      const text = document.getElementById('output').value;
+      navigator.clipboard.writeText(text);
+      alert('✅ JSON copied to clipboard!');
+    }
+  </script>
+</body>
+</html>
