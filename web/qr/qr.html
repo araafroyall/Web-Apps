@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+    body {
+      background: #004d40;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #00695c;
+      width: 100%;
+      max-width: 380px;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      max-length: 500;
+      padding: 12px;
+      font-size: 15px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: none;
+      resize: vertical;
+      outline: none;
+    }
+    .info {
+      font-size: 12px;
+      margin-bottom: 10px;
+      opacity: 0.7;
+    }
+    button {
+      background: #1de9b6;
+      color: #004d40;
+      font-weight: bold;
+      padding: 12px 20px;
+      margin: 6px 4px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #qr-box {
+      margin-top: 20px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #00000040;
+      display: flex;
+      justify-content: center;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🖤 HD QR Code Generator</h2>
+    <textarea id="text" maxlength="500" placeholder="Enter up to 500 characters..."></textarea>
+    <div class="info" id="charCount">0 / 500</div>
+    <div>
+      <button onclick="generate()">Generate</button>
+      <button onclick="save()">Save</button>
+    </div>
+    <div id="qr-box"></div>
+  </div>
+
+  <script>
+    const qr = new QRCodeStyling({
+      width: 280,
+      height: 280,
+      type: "canvas",
+      data: "",
+      margin: 1,
+      dotsOptions: {
+        color: "#000000",
+        type: "square"
+      },
+      backgroundOptions: {
+        color: "#ffffff"
+      }
+    });
+
+    function generate() {
+      const input = document.getElementById("text");
+      const text = input.value.trim();
+      if (!text) return alert("Please enter something");
+      if (text.length > 500) return alert("Limit exceeded: Max 500 characters allowed!");
+      qr.update({ data: text });
+      const box = document.getElementById("qr-box");
+      box.innerHTML = "";
+      qr.append(box);
+    }
+
+    function save() {
+      qr.download({ name: "QR_Code", extension: "png" });
+    }
+
+    document.getElementById("text").addEventListener("input", function() {
+      const len = this.value.length;
+      document.getElementById("charCount").textContent = `${len} / 500`;
+    });
+  </script>
+</body>
+</html>
