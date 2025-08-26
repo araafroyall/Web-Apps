@@ -208,20 +208,64 @@
     rightPerson=null;
   };
 
-  function parseChat(text){
-    const parts = text.split(/(?=\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2})/g).map(s=>s.trim()).filter(Boolean);
-    const arr=[];
-    for(const p of parts){
-      const dash = p.indexOf(' - ');
-      if(dash<0) { arr.push({sender:null,msg:p}); continue; }
-      const rest = p.slice(dash+3).trim();
-      const c = rest.indexOf(':');
-      if(c>0){ arr.push({sender:rest.slice(0,c).trim(), msg:rest.slice(c+1).trim()}); }
-      else    { arr.push({sender:null, msg:rest}); }
+function parseChat(text){
+  // normalize weird unicode spaces and CRs
+  text = String(text || '')
+    .replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g, ' ')
+    .replace(/\r/g, '');
+
+  // split on date-time (keeps time like "10:23", "10:23 am" etc)
+  const parts = text
+    .split(/(?=\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2}(?:\s*[ap]\.?m\.?)?)/i)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const arr = [];
+  for (const p of parts){
+    const dash = p.indexOf(' - ');
+    if (dash < 0){
+      // continuation line: append to previous message if exists, otherwise skip garbage
+      if (arr.length){
+        arr[arr.length - 1].msg += '\n' + p.trim();
+      }
+      continue;
     }
-    if(arr.length && !arr[0].sender && /end-to-end encrypted/i.test(arr[0].msg)) arr.shift();
-    return arr;
+
+    const rest = p.slice(dash + 3).trim();
+    const colon = rest.indexOf(':');
+
+    if (colon > 0){
+      let sender = rest.slice(0, colon).trim();
+      let msg = rest.slice(colon + 1).trim();
+
+      // sanitize message: remove stray unicode spaces, trim, remove empty numeric-only lines
+      msg = msg.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g, ' ').trim();
+      // If message is just a single numeric token (artifact), clear it
+      if (/^\d+$/.test(msg)) msg = '';
+
+      arr.push({ sender, msg });
+    } else {
+      // system / action line (no "Name: msg") — keep only if not pure number garbage
+      const cleaned = rest.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g,' ').trim();
+      if (cleaned && !/^\d+$/.test(cleaned)) arr.push({ sender: null, msg: cleaned });
+    }
   }
+
+  // drop initial whatsapp "Messages and calls are end-to-end encrypted" if present
+  if (arr.length && !arr[0].sender && /end-to-end encrypted/i.test(arr[0].msg)) arr.shift();
+
+  // final cleanup: remove empty msgs and strip any lines that are only digits
+  const final = arr.map(item => {
+    const msgLines = (item.msg || '').split('\n')
+      .map(l => l.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g,' ').trim())
+      .filter(l => !/^\d+$/.test(l)) // remove stray numeric-only lines (the "2" ghosts)
+      .join('\n')
+      .trim();
+    return { sender: item.sender, msg: msgLines };
+  }).filter(it => it.msg && it.msg.length);
+
+  return final;
+}
 
   function renderChat(){
     chat.innerHTML='';
