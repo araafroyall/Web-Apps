@@ -125,6 +125,18 @@
     box-shadow:0 10px 24px rgba(0,0,0,.12);
   }
   .fab button{appearance:none;border:none;background:transparent;padding:12px 16px;font-weight:700;color:#0a5;cursor:pointer}
+
+    .date-separator {
+      text-align: center;
+      margin: 10px 0;
+    }
+    .date-separator span {
+      background: #ccc;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
 </style>
 </head>
 <body>
@@ -208,98 +220,123 @@
     rightPerson=null;
   };
 
+
+
+
+
+
+
 function parseChat(text){
-  // normalize weird unicode spaces and CRs
   text = String(text || '')
-    .replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g, ' ')
+    .replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g, ' ') // remove invisible unicode
     .replace(/\r/g, '');
 
-  // split on date-time (keeps time like "10:23", "10:23 am" etc)
   const parts = text
     .split(/(?=\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2}(?:\s*[ap]\.?m\.?)?)/i)
     .map(s => s.trim())
     .filter(Boolean);
 
   const arr = [];
+  let lastDate = null;
+
   for (const p of parts){
     const dash = p.indexOf(' - ');
     if (dash < 0){
-      // continuation line: append to previous message if exists, otherwise skip garbage
-      if (arr.length){
-        arr[arr.length - 1].msg += '\n' + p.trim();
+      // continuation: append, but skip if it's only digits
+      const clean = p.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g,' ').trim();
+      if (arr.length && clean && !/^\d+$/.test(clean)){
+        arr[arr.length - 1].msg += '\n' + clean;
       }
       continue;
     }
 
+    const dateTime = p.slice(0, dash).trim();   // e.g. "24/08/25, 10:23 am"
     const rest = p.slice(dash + 3).trim();
     const colon = rest.indexOf(':');
 
+    let sender = null, msg = '';
     if (colon > 0){
-      let sender = rest.slice(0, colon).trim();
-      let msg = rest.slice(colon + 1).trim();
-
-      // sanitize message: remove stray unicode spaces, trim, remove empty numeric-only lines
-      msg = msg.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g, ' ').trim();
-      // If message is just a single numeric token (artifact), clear it
-      if (/^\d+$/.test(msg)) msg = '';
-
-      arr.push({ sender, msg });
+      sender = rest.slice(0, colon).trim();
+      msg = rest.slice(colon + 1).trim();
     } else {
-      // system / action line (no "Name: msg") — keep only if not pure number garbage
-      const cleaned = rest.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g,' ').trim();
-      if (cleaned && !/^\d+$/.test(cleaned)) arr.push({ sender: null, msg: cleaned });
+      msg = rest.trim();
+    }
+
+    msg = msg.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g,' ').trim();
+
+    // skip ghost numeric only lines
+    if (/^\d+$/.test(msg)) continue;
+
+    // extract just the date part
+    const dateOnly = dateTime.split(',')[0].trim();
+
+    // add date separator if date changed
+    if (dateOnly !== lastDate){
+      arr.push({ type: 'date-separator', date: dateOnly });
+      lastDate = dateOnly;
+    }
+
+    if (msg){
+      arr.push({ type: 'msg', sender, msg, date: dateOnly });
     }
   }
 
-  // drop initial whatsapp "Messages and calls are end-to-end encrypted" if present
-  if (arr.length && !arr[0].sender && /end-to-end encrypted/i.test(arr[0].msg)) arr.shift();
-
-  // final cleanup: remove empty msgs and strip any lines that are only digits
-  const final = arr.map(item => {
-    const msgLines = (item.msg || '').split('\n')
-      .map(l => l.replace(/[\u202F\u00A0\u200E\u200F\uFEFF]/g,' ').trim())
-      .filter(l => !/^\d+$/.test(l)) // remove stray numeric-only lines (the "2" ghosts)
-      .join('\n')
-      .trim();
-    return { sender: item.sender, msg: msgLines };
-  }).filter(it => it.msg && it.msg.length);
-
-  return final;
+  return arr;
 }
 
-  function renderChat(){
-    chat.innerHTML='';
-    for(const e of parsed){
-      if(!e.msg) continue;
-      if(/Messages and calls are end-to-end encrypted/i.test(e.msg)) continue;
 
-      const block = document.createElement('div'); block.className='msgBlock';
-      const bubble = document.createElement('div'); bubble.className='bubble';
 
-      const isRight = (e.sender && rightPerson && e.sender === rightPerson);
-      if(isRight){
-        bubble.classList.add('rightB');
-        block.style.alignSelf='flex-end';
-      }else{
-        if(e.sender){
-          const name = document.createElement('div');
-          name.className='name';
-          name.textContent = e.sender;
-          block.appendChild(name);
-        }
-        bubble.classList.add('leftB');
-        block.style.alignSelf='flex-start';
-      }
+function renderChat(){
+  chat.innerHTML='';
 
-      let msg = e.msg.replace(/(https?:\/\/[^\s]+)/g,(u)=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
-      msg = msg.replace(/<Media omitted>/ig,'<em style="opacity:.75">&lt;Media omitted&gt;</em>');
-      bubble.innerHTML = msg;
-
-      block.appendChild(bubble);
-      chat.appendChild(block);
+  for(const e of parsed){
+    // 🔹 case: date separator
+    if(e.type === "date-separator"){
+      const sep = document.createElement('div');
+      sep.className = 'date-separator';
+      sep.innerHTML = `<span>${e.date}</span>`;
+      chat.appendChild(sep);
+      continue;
     }
-    chat.scrollTop = 0;
+
+    // 🔹 case: normal messages
+    if(!e.msg) continue;
+    if(/Messages and calls are end-to-end encrypted/i.test(e.msg)) continue;
+
+    const block = document.createElement('div');
+    block.className='msgBlock';
+    const bubble = document.createElement('div');
+    bubble.className='bubble';
+
+    const isRight = (e.sender && rightPerson && e.sender === rightPerson);
+    if(isRight){
+      bubble.classList.add('rightB');
+      block.style.alignSelf='flex-end';
+    }else{
+      if(e.sender){
+        const name = document.createElement('div');
+        name.className='name';
+        name.textContent = e.sender;
+        block.appendChild(name);
+      }
+      bubble.classList.add('leftB');
+      block.style.alignSelf='flex-start';
+    }
+
+    let msg = e.msg.replace(/(https?:\/\/[^\s]+)/g,(u)=>
+      `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`
+    );
+    msg = msg.replace(/<Media omitted>/ig,
+      '<em style="opacity:.75">&lt;Media omitted&gt;</em>'
+    );
+    bubble.innerHTML = msg;
+
+    block.appendChild(bubble);
+    chat.appendChild(block);
   }
+
+  chat.scrollTop = 0;
+}
 </script>
 </body>
 </html>
