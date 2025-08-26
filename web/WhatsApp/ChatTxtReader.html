@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Chat Viewer • Material 3</title>
+<style>
+  :root{
+    --primary:#0F766E;          /* teal (M3-ish) */
+    --on-primary:#ffffff;
+    --surface:#ECF8F7;          /* page bg */
+    --card:#ffffff;             /* white card */
+    --outline:#E3EEEC;
+    --right:#00897B;            /* right bubble teal */
+    --left:#ffffff;             /* left bubble */
+    --left-name:#0b5b53;        /* name color */
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Roboto,Arial}
+  body{background:var(--surface);display:flex;align-items:center;justify-content:center}
+
+  /* ---------- Landing Card ---------- */
+  .landing{
+    width:min(92vw,560px);
+    background:var(--card);
+    border:1px solid var(--outline);
+    border-radius:20px;
+    box-shadow:0 14px 40px rgba(0,0,0,.06);
+    padding:18px 18px 16px;
+    display:flex;flex-direction:column;
+    min-height:56vh;
+  }
+  .landing h1{margin:6px 6px 2px;font-size:20px;letter-spacing:.2px;color:#1a1a1a}
+  .landing p{margin:0 6px;color:#555;opacity:.85;font-size:14px}
+  .hero{
+    margin-top:16px;
+    border-radius:16px;
+    background:linear-gradient(135deg,#E6F4F3,#F7FCFB);
+    border:1px dashed #cfe8e4;
+    min-height:22vh;
+    display:grid;place-items:center;
+    text-align:center;padding:18px;
+  }
+  .hero small{color:#5a7;opacity:.9}
+
+  /* pretty file button */
+ .landing{
+  width:min(92vw,560px);
+  background:var(--card);
+  border:1px solid var(--outline);
+  border-radius:20px;
+  box-shadow:0 14px 40px rgba(0,0,0,.06);
+  padding:18px 18px 16px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;   /* 👈 keeps button area at bottom */
+  min-height:56vh;
+}
+.picker{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-top:12px;
+}
+.m3-btn{
+  display:block;           /* 👈 makes it respect parent width */
+  box-sizing:border-box;   /* 👈 includes padding in width */
+  width:100%;
+  max-width:100%;          /* 👈 ensures no overflow */
+  -webkit-tap-highlight-color: transparent;
+  appearance:none;
+  border:none;
+  cursor:pointer;
+  padding:14px 16px;
+  border-radius:12px;
+  background:var(--primary);
+  color:var(--on-primary);
+  font-weight:700;
+  font-size:16px;
+  letter-spacing:.2px;
+  box-shadow:0 4px 10px rgba(15,118,110,.18);
+  transition:transform .06s ease, box-shadow .2s ease;
+}
+  .m3-btn:active{transform:translateY(1px);box-shadow:0 3px 8px rgba(15,118,110,.25)}
+  .subnote{
+    font-size:12px;
+    color:#6a7;
+    opacity:.9;
+    text-align:center;
+    margin-bottom:4px;
+  }
+
+  input[type=file]{display:none}
+
+  /* ---------- Dialog (choose right person) ---------- */
+  .dialog{
+    position:fixed;inset:0;background:rgba(0,0,0,.58);
+    display:none;align-items:center;justify-content:center;z-index:20;
+  }
+  .dialog-box{
+    width:min(92vw,420px);background:#fff;border-radius:18px;
+    padding:18px;border:1px solid var(--outline);
+    box-shadow:0 20px 60px rgba(0,0,0,.22);text-align:center;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+  .chip{
+    padding:10px 14px;border-radius:999px;border:1px solid #cfe7e4;background:#f7fcfb;
+    font-weight:600;cursor:pointer
+  }
+  .chip:hover{background:#eef8f6}
+
+  /* ---------- Chat area (focus mode) ---------- */
+  .screen{display:none;position:fixed;inset:0;background:var(--surface);z-index:10}
+  .chat{position:absolute;inset:0;overflow:auto;padding:14px 10px 22px;display:flex;flex-direction:column}
+  .msgBlock{max-width:82%;display:flex;flex-direction:column;margin:8px 0}
+  .name{font-size:12px;font-weight:700;color:var(--left-name);margin:0 0 3px 6px}
+  .bubble{
+    padding:10px 14px;border-radius:18px;line-height:1.35;font-size:15px;white-space:pre-wrap;
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+  }
+  .leftB{align-self:flex-start;background:var(--left);color:#223;border-bottom-left-radius:6px}
+  .rightB{align-self:flex-end;background:var(--right);color:#fff;border-bottom-right-radius:6px}
+  .fab{
+    position:fixed;right:14px;bottom:14px;z-index:25;
+    background:#ffffff;border:1px solid var(--outline);border-radius:999px;
+    box-shadow:0 10px 24px rgba(0,0,0,.12);
+  }
+  .fab button{appearance:none;border:none;background:transparent;padding:12px 16px;font-weight:700;color:#0a5;cursor:pointer}
+</style>
+</head>
+<body>
+
+  <!-- Landing -->
+  <section class="landing" id="landing">
+    <h1>Select Chat File</h1>
+    <p>WhatsApp-style export (.txt). We’ll render as chat bubbles.</p>
+
+    <div class="hero">
+      <div>
+        <div style="font-size:48px;line-height:1">💬</div>
+        <small>Beautiful teal bubbles • names on left • full-screen focus</small>
+      </div>
+    </div>
+
+    <div class="picker">
+      <label class="m3-btn" for="fileInput">📂 Pick chat file</label>
+      <input id="fileInput" type="file" accept=".txt" />
+      <div class="subnote">Button stays neat inside card 👍</div>
+    </div>
+  </section>
+
+  <!-- Choose who is on RIGHT -->
+  <div class="dialog" id="whoDialog">
+    <div class="dialog-box">
+      <h3 style="margin:0 0 6px">Who should appear on the <span style="color:var(--primary)">RIGHT</span>?</h3>
+      <div class="chips" id="nameChips"></div>
+      <div class="subnote" style="margin-top:10px">Others will be on the left with names above.</div>
+    </div>
+  </div>
+
+  <!-- Chat focus screen -->
+  <section class="screen" id="chatScreen">
+    <div class="chat" id="chat"></div>
+    <div class="fab"><button id="backBtn">← Pick another</button></div>
+  </section>
+
+<script>
+  const fileInput  = document.getElementById('fileInput');
+  const landing    = document.getElementById('landing');
+  const whoDialog  = document.getElementById('whoDialog');
+  const nameChips  = document.getElementById('nameChips');
+  const chatScreen = document.getElementById('chatScreen');
+  const chat       = document.getElementById('chat');
+  const backBtn    = document.getElementById('backBtn');
+
+  let rawText = '', rightPerson = null, parsed = [];
+
+  fileInput.addEventListener('change', async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const t = await f.text();
+    rawText = t.replace(/\u202F|\u00A0|\u200E|\u200F/g,' ');
+    parsed  = parseChat(rawText);
+    const names = Array.from(new Set(parsed.filter(x=>x.sender).map(x=>x.sender)));
+    showWhoDialog(names);
+  });
+
+  function showWhoDialog(names){
+    nameChips.innerHTML='';
+    names.forEach(n=>{
+      const chip = document.createElement('button');
+      chip.className='chip'; chip.textContent=n;
+      chip.onclick = ()=> { rightPerson=n; whoDialog.style.display='none'; startChat(); };
+      nameChips.appendChild(chip);
+    });
+    whoDialog.style.display='flex';
+  }
+
+  function startChat(){
+    landing.style.display='none';
+    chatScreen.style.display='block';
+    renderChat();
+  }
+
+  backBtn.onclick = ()=>{
+    chatScreen.style.display='none';
+    landing.style.display='flex';
+    fileInput.value='';
+    chat.innerHTML='';
+    rightPerson=null;
+  };
+
+  function parseChat(text){
+    const parts = text.split(/(?=\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2})/g).map(s=>s.trim()).filter(Boolean);
+    const arr=[];
+    for(const p of parts){
+      const dash = p.indexOf(' - ');
+      if(dash<0) { arr.push({sender:null,msg:p}); continue; }
+      const rest = p.slice(dash+3).trim();
+      const c = rest.indexOf(':');
+      if(c>0){ arr.push({sender:rest.slice(0,c).trim(), msg:rest.slice(c+1).trim()}); }
+      else    { arr.push({sender:null, msg:rest}); }
+    }
+    if(arr.length && !arr[0].sender && /end-to-end encrypted/i.test(arr[0].msg)) arr.shift();
+    return arr;
+  }
+
+  function renderChat(){
+    chat.innerHTML='';
+    for(const e of parsed){
+      if(!e.msg) continue;
+      if(/Messages and calls are end-to-end encrypted/i.test(e.msg)) continue;
+
+      const block = document.createElement('div'); block.className='msgBlock';
+      const bubble = document.createElement('div'); bubble.className='bubble';
+
+      const isRight = (e.sender && rightPerson && e.sender === rightPerson);
+      if(isRight){
+        bubble.classList.add('rightB');
+        block.style.alignSelf='flex-end';
+      }else{
+        if(e.sender){
+          const name = document.createElement('div');
+          name.className='name';
+          name.textContent = e.sender;
+          block.appendChild(name);
+        }
+        bubble.classList.add('leftB');
+        block.style.alignSelf='flex-start';
+      }
+
+      let msg = e.msg.replace(/(https?:\/\/[^\s]+)/g,(u)=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+      msg = msg.replace(/<Media omitted>/ig,'<em style="opacity:.75">&lt;Media omitted&gt;</em>');
+      bubble.innerHTML = msg;
+
+      block.appendChild(bubble);
+      chat.appendChild(block);
+    }
+    chat.scrollTop = 0;
+  }
+</script>
+</body>
+</html>
