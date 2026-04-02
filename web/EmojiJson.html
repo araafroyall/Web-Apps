@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emoji Mapper</title>
+
+<style>
+body {
+    margin:0;
+    font-family:system-ui;
+    background:#fff;
+    color:#222;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px;
+}
+h2 { color:#0f766e; }
+
+button {
+    background:#14b8a6;
+    border:none;
+    color:#fff;
+    padding:12px;
+    border-radius:10px;
+    width:100%;
+    max-width:420px;
+    margin:6px 0;
+}
+
+pre {
+    width:100%;
+    max-width:420px;
+    background:#f1f5f9;
+    padding:12px;
+    border-radius:10px;
+    overflow:auto;
+    font-size:13px;
+}
+
+#toast {
+    position:fixed;
+    bottom:20px;
+    background:#0f766e;
+    color:#fff;
+    padding:10px 16px;
+    border-radius:8px;
+    opacity:0;
+    transition:.3s;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Emoji Key Generator</h2>
+<button onclick="generate()">Generate</button>
+<button onclick="copyJSON()">Copy JSON</button>
+
+<pre id="output">Click generate...</pre>
+<div id="toast">Copied!</div>
+
+<script>
+
+// ✅ VERIFIED SAFE EMOJIS (no boxes)
+const SAFE = [
+"😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊",
+"😋","😎","😍","😘","😗","😙","😚","🙂","🤗","🤩",
+"🤔","🤨","😐","😑","😶","🙄","😏","😣","😥","😮",
+"🤐","😯","😪","😫","😴","😌","😛","😜","😝","🤤",
+"😒","😓","😔","😕","🙃","🤑","😲","☹️","🙁","😖",
+"😞","😟","😤","😢","😭","😦","😧","😨","😩","🤯",
+"😬","😰","😱","🥵","🥶","😳","🤪","😵","😡","😠",
+"🤬","😷","🤒","🤕","🤢","🤮","🤧","😇","🥳","🥺",
+"🤠","🤡","💩","👻","💀","☠️","👽","🤖","🎃","😺",
+"😸","😹","😻","😼","😽","🙀","😿","😾",
+"🚀","🚁","🚗","🚕","🚌","🚓","🚑","🚒","🚜","✈️",
+"🛳️","🚤","🛵","🚲","🛴",
+"🌍","🌎","🌏","🌙","⭐","🌟","✨","⚡","🔥","💧",
+"🍎","🍉","🍇","🍓","🍒","🍍","🥭","🍕","🍔","🍟",
+"⚽","🏀","🏈","⚾","🎾","🏐","🎮","🎲","🎯",
+"❤️","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️"
+];
+
+function generate() {
+
+    const keys = [];
+
+    for (let i=65;i<=90;i++) keys.push(String.fromCharCode(i));
+    for (let i=97;i<=122;i++) keys.push(String.fromCharCode(i));
+    for (let i=48;i<=57;i++) keys.push(String.fromCharCode(i));
+
+    keys.push("=", "/", "#", "-", "+", "*", "_", "@", "&", "%", ".", "?");
+
+    const used = new Set();
+    const map = {};
+
+    for (let key of keys) {
+
+        let emoji = "";
+        let safety = 0;
+
+        while ((emoji==="" || used.has(emoji)) && safety < 1000) {
+            emoji = SAFE[Math.floor(Math.random() * SAFE.length)];
+            safety++;
+        }
+
+        if (emoji==="") emoji = key;
+
+        used.add(emoji);
+        map[key] = emoji;
+    }
+
+    document.getElementById("output").textContent =
+        JSON.stringify(map,null,4);
+}
+
+function copyJSON() {
+    const text = document.getElementById("output").textContent;
+
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+
+    showToast();
+}
+
+function showToast() {
+    const t = document.getElementById("toast");
+    t.style.opacity = 1;
+    setTimeout(()=>t.style.opacity=0,1500);
+}
+
+</script>
+
+</body>
+</html>
